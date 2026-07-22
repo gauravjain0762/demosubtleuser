@@ -29,12 +29,7 @@ function getDayLabel(iso) {
 
 export default function ConfirmationPage() {
   return (
-    <Suspense fallback={
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 16 }}>
-        <DeliveryVanAnimation />
-        <p style={{ opacity: 0.5, fontSize: 13, letterSpacing: "0.04em" }}>Confirming your order…</p>
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight: "100vh" }} />}>
       <ConfirmationPageInner />
     </Suspense>
   );
@@ -119,12 +114,7 @@ function ConfirmationPageInner() {
   }, [total]);
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 16 }}>
-        <DeliveryVanAnimation />
-        <p style={{ opacity: 0.5, fontSize: 13, letterSpacing: "0.04em" }}>Confirming your order…</p>
-      </div>
-    );
+    return <div style={{ minHeight: "100vh" }} />;
   }
 
   if (loadError) {

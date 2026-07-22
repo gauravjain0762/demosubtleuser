@@ -2343,7 +2343,7 @@
 }
 .carouselDots {
   position: absolute;
-  bottom: 10px;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2351,8 +2351,8 @@
   z-index: 6;
 }
 .carouselDot {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: rgba(255,255,255,0.5);
   cursor: pointer;

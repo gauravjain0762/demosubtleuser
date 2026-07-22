@@ -8,6 +8,7 @@ import AuthPanel from "../components/AuthPanel";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
+import DeliveryVanAnimation from "../components/DeliveryVanAnimation";
 
 const COMPANY = "ACME2024";
 const LUNCH_TIMES = ["11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM"];
@@ -523,11 +524,19 @@ export default function MenuPage() {
   const router = useRouter();
   const [menuDays, setMenuDays] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
+  const [dateLoading, setDateLoading] = useState(false);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [favorites, setFavorites] = useState(new Set());
   const saveTimerRef = useRef(null);
 
   useEffect(() => { sessionStorage.removeItem("reorder_items"); }, []);
+
+  // Show loading animation when user switches dates
+  useEffect(() => {
+    setDateLoading(true);
+    const t = setTimeout(() => setDateLoading(false), 400);
+    return () => clearTimeout(t);
+  }, [selectedDate]);
 
   // Keep the selected lunch time valid for this workspace's actual delivery
   // slots — the default/previous value may not be one they offer.
@@ -841,7 +850,7 @@ export default function MenuPage() {
             Order before <strong>10:00 PM</strong> for next-day delivery
           </div>
           <h1 className={styles.heading}>This week&apos;s menu</h1>
-          <p className={styles.subtext}>Pick the days you want lunch. Each day has multiple dishes to choose from.</p>
+          <p className={styles.subtext}>Pick the days you want lunch. Each day features one main meal with a veggie alternative.</p>
         </div>
 
         {/* Picker row — calendar + time chips */}
@@ -895,11 +904,12 @@ export default function MenuPage() {
       <div className={styles.main}>
         <div className={styles.menuList}>
           {/* Dish cards */}
-          {menuLoading && (
-            <div className={styles.logoLoaderWrap}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="" className={styles.logoLoader} />
-              <p className={styles.logoLoaderText}>Preparing today&apos;s menu…</p>
+          {(menuLoading || dateLoading) && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 0 32px", gap: 16 }}>
+              <DeliveryVanAnimation />
+              <p style={{ opacity: 0.5, fontSize: 13, letterSpacing: "0.04em", marginTop: 8 }}>
+                {menuLoading ? "Please wait menu is loading" : "Loading…"}
+              </p>
             </div>
           )}
           {!menuLoading && !menuDays[selectedDay]?.dishes?.length && (

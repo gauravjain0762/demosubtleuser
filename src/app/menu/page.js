@@ -12,6 +12,7 @@ import DeliveryVanAnimation from "../components/DeliveryVanAnimation";
 
 const COMPANY = "ACME2024";
 const LUNCH_TIMES = ["11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM"];
+const MIN_QUANTITY = 75;
 
 function isDateClosed(date) {
   if (!date) return false;
@@ -690,8 +691,8 @@ export default function MenuPage() {
           dishName:    dish.name,
           date:        menuDays[d]?.isoDate || "",
           portionSize: portions[k] || "Regular",
-          qty:         quantities[k] || 1,
-          addons:      [...(addons[k] || new Set())].map(name => ({ name, qty: addonQtys[k]?.[name] || 1 })),
+          qty:         quantities[k] || MIN_QUANTITY,
+          addons:      [...(addons[k] || new Set())].map(name => ({ name, qty: addonQtys[k]?.[name] || MIN_QUANTITY })),
         });
         return acc;
       }, []);
@@ -753,7 +754,7 @@ export default function MenuPage() {
     return dishPortions.find(p => p.size === "Regular")?.size || dishPortions[0].size;
   };
   const getPortion = (d, di) => portions[getKey(d, di)] || getDefaultPortion(d, di);
-  const getQty = (d, di) => quantities[getKey(d, di)] || 1;
+  const getQty = (d, di) => quantities[getKey(d, di)] || MIN_QUANTITY;
   const getAddonSet = (d, di) => addons[getKey(d, di)] || new Set();
 
   const toggleDish = (d, di) => {
@@ -766,7 +767,7 @@ export default function MenuPage() {
       return next;
     });
     if (!portions[k]) setPortions(p => ({ ...p, [k]: getDefaultPortion(d, di) }));
-    if (!quantities[k]) setQuantities(q => ({ ...q, [k]: 1 }));
+    if (!quantities[k]) setQuantities(q => ({ ...q, [k]: MIN_QUANTITY }));
     setExpandedDish(null);
   };
 
@@ -781,23 +782,23 @@ export default function MenuPage() {
     });
     setAddonQtys(q => {
       const kq = { ...(q[k] || {}) };
-      if (kq[name]) { delete kq[name]; } else { kq[name] = 1; }
+      if (kq[name]) { delete kq[name]; } else { kq[name] = MIN_QUANTITY; }
       return { ...q, [k]: kq };
     });
   };
 
-  const getAddonQty   = (d, di, name) => addonQtys[getKey(d, di)]?.[name] || 1;
+  const getAddonQty   = (d, di, name) => addonQtys[getKey(d, di)]?.[name] || MIN_QUANTITY;
   const incrAddonQty  = (d, di, name) => {
     const k = getKey(d, di);
-    setAddonQtys(q => ({ ...q, [k]: { ...(q[k] || {}), [name]: (q[k]?.[name] || 1) + 1 } }));
+    setAddonQtys(q => ({ ...q, [k]: { ...(q[k] || {}), [name]: (q[k]?.[name] || MIN_QUANTITY) + 1 } }));
   };
   const decrAddonQty  = (d, di, name) => {
     const k = getKey(d, di);
-    setAddonQtys(q => ({ ...q, [k]: { ...(q[k] || {}), [name]: Math.max(1, (q[k]?.[name] || 1) - 1) } }));
+    setAddonQtys(q => ({ ...q, [k]: { ...(q[k] || {}), [name]: Math.max(MIN_QUANTITY, (q[k]?.[name] || MIN_QUANTITY) - 1) } }));
   };
 
   const incrQty = (d, di) => setQuantities(q => ({ ...q, [getKey(d, di)]: getQty(d, di) + 1 }));
-  const decrQty = (d, di) => setQuantities(q => ({ ...q, [getKey(d, di)]: Math.max(1, getQty(d, di) - 1) }));
+  const decrQty = (d, di) => setQuantities(q => ({ ...q, [getKey(d, di)]: Math.max(MIN_QUANTITY, getQty(d, di) - 1) }));
 
   const dayHasItems = (d) => menuDays[d]?.dishes.some((_, di) => isSelectedDish(d, di));
 
@@ -810,7 +811,7 @@ export default function MenuPage() {
     const addonSet = getAddonSet(d, di);
     const addonTotal = [...addonSet].reduce((s, name) => {
       const price = (dish.addons || []).find(a => a.name === name)?.price || 0;
-      const qty   = addonQtys[getKey(d, di)]?.[name] || 1;
+      const qty   = addonQtys[getKey(d, di)]?.[name] || MIN_QUANTITY;
       return s + price * qty;
     }, 0);
     if (dish.portions?.length) {
@@ -1114,7 +1115,7 @@ export default function MenuPage() {
                       price:    getDishPrice(d, di),
                       portionSize: portion || "Regular",
                       qty,
-                      addons: [...(addons[`${d}_${di}`] || new Set())].map(name => ({ name, qty: addonQtys[`${d}_${di}`]?.[name] || 1 })),
+                      addons: [...(addons[`${d}_${di}`] || new Set())].map(name => ({ name, qty: addonQtys[`${d}_${di}`]?.[name] || MIN_QUANTITY })),
                     })),
                   };
                   sessionStorage.setItem("sk_order", JSON.stringify(payload));
@@ -1267,7 +1268,7 @@ export default function MenuPage() {
                             {/* Qty controls — only when selected */}
                             {active && (
                               <div className={styles.addonQtyCtrl}>
-                                <button className={styles.addonQtyBtn} onClick={() => decrAddonQty(d, di, a.name)}>−</button>
+                                <button className={styles.addonQtyBtn} onClick={() => decrAddonQty(d, di, a.name)} disabled={aqty <= MIN_QUANTITY}>−</button>
                                 <span className={styles.addonQtyVal}>{aqty}</span>
                                 <button className={styles.addonQtyBtn} onClick={() => incrAddonQty(d, di, a.name)}>+</button>
                               </div>
@@ -1294,23 +1295,35 @@ export default function MenuPage() {
                 ) : (
                   <div className={styles.dishDetailFooter}>
                     <div className={styles.qtyCtrl}>
-                      <button className={styles.qtyBtn} onClick={() => decrQty(d, di)} disabled={qty <= 1}>−</button>
+                      <button className={styles.qtyBtn} onClick={() => decrQty(d, di)} disabled={qty <= MIN_QUANTITY}>−</button>
                       <span className={styles.qtyNum}>{qty}</span>
                       <button className={styles.qtyBtn} onClick={() => incrQty(d, di)}>+</button>
                     </div>
-                    <button
-                      className={`${styles.dishDetailAddBtn} ${sel ? styles.dishDetailAddBtnActive : ""}`}
-                      onClick={() => { toggleDish(d, di); if (!sel) closeDetail(); }}
-                    >
-                      {sel ? (
-                        <>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                          </svg>
-                          Remove from order
-                        </>
-                      ) : `Add to order · £${(dishPrice * qty).toFixed(2)}`}
-                    </button>
+                    {qty < MIN_QUANTITY ? (
+                      <div style={{ textAlign: "center", flex: 1 }}>
+                        <button
+                          className={styles.dishDetailAddBtn}
+                          disabled
+                          style={{ opacity: 0.5, cursor: "not-allowed" }}
+                        >
+                          Min {MIN_QUANTITY} servings required
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className={`${styles.dishDetailAddBtn} ${sel ? styles.dishDetailAddBtnActive : ""}`}
+                        onClick={() => { toggleDish(d, di); if (!sel) closeDetail(); }}
+                      >
+                        {sel ? (
+                          <>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                            </svg>
+                            Remove from order
+                          </>
+                        ) : `Add to order · £${(dishPrice * qty).toFixed(2)}`}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

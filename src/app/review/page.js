@@ -93,7 +93,6 @@ export default function ReviewPage() {
   // ── Order submission ──
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [confirming, setConfirming] = useState(false);
 
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
   const discount = promoApplied && promoDiscount
@@ -103,9 +102,29 @@ export default function ReviewPage() {
     : 0;
   const total = subtotal - discount;
 
+  const MIN_QUANTITY = 75;
+
   const handlePlaceOrder = async () => {
     if (!user) { setAuthOpen(true); return; }
     if (!order) return;
+
+    // Validate minimum quantities
+    for (const item of items) {
+      if ((item.qty || 1) < MIN_QUANTITY) {
+        setSubmitError(`Each dish must have minimum ${MIN_QUANTITY} servings. ${item.dishName} has ${item.qty || 1}.`);
+        return;
+      }
+      if (Array.isArray(item.addons)) {
+        for (const addon of item.addons) {
+          const addonQty = typeof addon === "object" ? addon.qty : 1;
+          if (addonQty < MIN_QUANTITY) {
+            setSubmitError(`Each add-on must have minimum ${MIN_QUANTITY} servings. ${typeof addon === "object" ? addon.name : addon} has ${addonQty}.`);
+            return;
+          }
+        }
+      }
+    }
+
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -145,8 +164,7 @@ export default function ReviewPage() {
         // Stash local image/name data so /confirmation can enrich the order
         // it re-fetches by Stripe session id once payment completes.
         sessionStorage.setItem("sk_pending_order", JSON.stringify({ items: localItems }));
-        setConfirming(true);
-        setTimeout(() => { window.location.href = data.checkoutUrl; }, 600);
+        window.location.href = data.checkoutUrl;
         return;
       }
 
@@ -387,14 +405,6 @@ export default function ReviewPage() {
         </div>
       </div>
     </div>
-    {confirming && (
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-        <div style={{ background: "white", borderRadius: 16, padding: 32, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, maxWidth: 300 }}>
-          <DeliveryVanAnimation />
-          <p style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>Please wait order is confirming</p>
-        </div>
-      </div>
-    )}
     {authOpen && <AuthPanel onClose={() => setAuthOpen(false)} />}
     </>
   );

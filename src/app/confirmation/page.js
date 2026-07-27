@@ -64,7 +64,7 @@ function ConfirmationPageInner() {
         portionSize: apiItem.portionSize || local?.portionSize || "",
         qty:         apiItem.qty         ?? local?.qty         ?? 1,
         addons:      apiItem.addons      || local?.addons      || [],
-        price:       apiItem.price       ?? local?.price       ?? 0,
+        price:       local?.price ?? apiItem.price ?? 0,
         img:         apiItem.img         || local?.img         || "",
         tags:        local?.tags         || [],
       };
@@ -79,7 +79,14 @@ function ConfirmationPageInner() {
           sessionStorage.removeItem("sk_pending_order");
           sessionStorage.removeItem("sk_confirmation");
         })
-        .catch(err => setLoadError(err.error || "Could not load your order."))
+        .catch(err => {
+          // Fallback to pending order from sessionStorage if API fails (e.g., auth issues)
+          if (pending) {
+            setOrder({ ...pending, items: enrichItems(pending.items || []) });
+          } else {
+            setLoadError(err.error || "Could not load your order.");
+          }
+        })
         .finally(() => setLoading(false));
     } else {
       // No Stripe checkout — /review already stored the confirmed order.

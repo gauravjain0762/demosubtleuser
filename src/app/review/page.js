@@ -102,23 +102,25 @@ export default function ReviewPage() {
     : 0;
   const total = subtotal - discount;
 
-  const MIN_QUANTITY = 75;
+  const MIN_QUANTITY = 1;
+  const MAX_QUANTITY = 100;
 
   const handlePlaceOrder = async () => {
     if (!user) { setAuthOpen(true); return; }
     if (!order) return;
 
-    // Validate minimum quantities
+    // Validate quantity ranges
     for (const item of items) {
-      if ((item.qty || 1) < MIN_QUANTITY) {
-        setSubmitError(`Each dish must have minimum ${MIN_QUANTITY} servings. ${item.dishName} has ${item.qty || 1}.`);
+      const qty = item.qty || 1;
+      if (qty < MIN_QUANTITY || qty > MAX_QUANTITY) {
+        setSubmitError(`Each dish must be between ${MIN_QUANTITY} and ${MAX_QUANTITY} servings. ${item.dishName} has ${qty}.`);
         return;
       }
       if (Array.isArray(item.addons)) {
         for (const addon of item.addons) {
           const addonQty = typeof addon === "object" ? addon.qty : 1;
-          if (addonQty < MIN_QUANTITY) {
-            setSubmitError(`Each add-on must have minimum ${MIN_QUANTITY} servings. ${typeof addon === "object" ? addon.name : addon} has ${addonQty}.`);
+          if (addonQty < MIN_QUANTITY || addonQty > MAX_QUANTITY) {
+            setSubmitError(`Each add-on must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}. ${typeof addon === "object" ? addon.name : addon} has ${addonQty}.`);
             return;
           }
         }

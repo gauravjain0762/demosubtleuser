@@ -1122,7 +1122,10 @@ export default function MenuPage() {
                       price:    getDishPrice(d, di),
                       portionSize: portion || "Regular",
                       qty,
-                      addons: [...(addons[`${d}_${di}`] || new Set())].map(name => ({ name, qty: addonQtys[`${d}_${di}`]?.[name] || 1 })),
+                      addons: [...(addons[`${d}_${di}`] || new Set())].map(name => {
+                        const addonData = (dish?.addons || []).find(a => a.name === name);
+                        return { name, qty: addonQtys[`${d}_${di}`]?.[name] || 1, price: addonData?.price || 0 };
+                      }),
                     })),
                   };
                   sessionStorage.setItem("sk_order", JSON.stringify(payload));

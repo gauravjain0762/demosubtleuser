@@ -94,7 +94,15 @@ export default function ReviewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+  const getAddonTotal = (item) => {
+    return (item.addons || []).reduce((sum, addon) => {
+      const addonPrice = typeof addon === "object" ? addon.price || 0 : 0;
+      const addonQty = typeof addon === "object" ? addon.qty || 1 : 1;
+      return sum + (addonPrice * addonQty);
+    }, 0);
+  };
+
+  const subtotal = items.reduce((s, i) => s + ((i.price || 0) * (i.qty || 1)) + getAddonTotal(i), 0);
   const discount = promoApplied && promoDiscount
     ? promoDiscount.type === "percentage"
       ? subtotal * (promoDiscount.value / 100)
@@ -257,7 +265,7 @@ export default function ReviewPage() {
                         </div>
                       </div>
                       <div className={styles.orderItemRight}>
-                        <span className={styles.itemPrice}>£{((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+                        <span className={styles.itemPrice}>£{(((item.price || 0) * (item.qty || 1)) + getAddonTotal(item)).toFixed(2)}</span>
                         <button className={styles.removeItemBtn} onClick={() => removeItem(i)} aria-label="Remove">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>

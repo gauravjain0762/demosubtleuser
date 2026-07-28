@@ -809,26 +809,30 @@ export default function MenuPage() {
   const getDishPrice = (d, di) => {
     const dish = menuDays[d]?.dishes[di];
     const portion = getPortion(d, di);
-    const addonSet = getAddonSet(d, di);
-    const addonTotal = [...addonSet].reduce((s, name) => {
-      const price = (dish.addons || []).find(a => a.name === name)?.price || 0;
-      const qty   = addonQtys[getKey(d, di)]?.[name] || MIN_QUANTITY;
-      return s + price * qty;
-    }, 0);
     if (dish.portions?.length) {
       const match = dish.portions.find(p => p.size === portion);
-      return (match ? match.price : dish.price) + addonTotal;
+      return match ? match.price : dish.price;
     }
-    return dish.price + (portion === "Large" ? 1.50 : 0) + addonTotal;
+    return dish.price + (portion === "Large" ? 1.50 : 0);
+  };
+
+  const getAddonTotal = (d, di) => {
+    const dish = menuDays[d]?.dishes[di];
+    const addonSet = getAddonSet(d, di);
+    return [...addonSet].reduce((s, name) => {
+      const price = (dish.addons || []).find(a => a.name === name)?.price || 0;
+      const qty   = addonQtys[getKey(d, di)]?.[name] || 1;
+      return s + price * qty;
+    }, 0);
   };
 
   const orderItems = Object.keys(selected).map(k => {
     const [d, di] = k.split("_").map(Number);
     const dish = menuDays[d]?.dishes[di];
-    return { k, d, di, dish, portion: getPortion(d, di), qty: getQty(d, di), price: getDishPrice(d, di) };
+    return { k, d, di, dish, portion: getPortion(d, di), qty: getQty(d, di), dishPrice: getDishPrice(d, di), addonPrice: getAddonTotal(d, di) };
   });
 
-  const subtotal = orderItems.reduce((s, x) => s + x.price * x.qty, 0);
+  const subtotal = orderItems.reduce((s, x) => s + (x.dishPrice * x.qty) + x.addonPrice, 0);
   const hasDishesToday = (menuDays[selectedDay]?.dishes?.length ?? 0) > 0;
 
   return (
@@ -1020,9 +1024,10 @@ export default function MenuPage() {
                 </div>
               ) : (
                 <div className={styles.basketList}>
-                  {orderItems.map(({ k, d, di, dish, portion, qty, price }) => {
+                  {orderItems.map(({ k, d, di, dish, portion, qty, dishPrice, addonPrice }) => {
                     const addonSet = getAddonSet(d, di);
                     const addonNames = [...addonSet];
+                    const itemTotal = (dishPrice * qty) + addonPrice;
                     return (
                     <div key={k} className={styles.basketItem}>
                       <div className={styles.basketItemLeft}>
@@ -1066,7 +1071,7 @@ export default function MenuPage() {
                         </div>
                       </div>
                       <div className={styles.basketItemRight}>
-                        <span className={styles.basketPrice}>£{(price * qty).toFixed(2)}</span>
+                        <span className={styles.basketPrice}>£{itemTotal.toFixed(2)}</span>
                         <button
                           className={styles.basketRemoveBtn}
                           onClick={() => toggleDish(d, di)}
@@ -1143,6 +1148,7 @@ export default function MenuPage() {
         const portion = getPortion(d, di);
         const qty = getQty(d, di);
         const dishPrice = getDishPrice(d, di);
+        const addonPrice = getAddonTotal(d, di);
         return (
           <div className={styles.dishDetailOverlay} onClick={e => e.target === e.currentTarget && closeDetail()}>
             <div className={styles.dishDetailModal}>
@@ -1312,7 +1318,7 @@ export default function MenuPage() {
                           </svg>
                           Remove from order
                         </>
-                      ) : `Add to order · £${(dishPrice * qty).toFixed(2)}`}
+                      ) : `Add to order · £${((dishPrice * qty) + addonPrice).toFixed(2)}`}
                     </button>
                   </div>
                 )}

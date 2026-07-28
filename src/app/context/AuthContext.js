@@ -20,11 +20,13 @@ export function AuthProvider({ children }) {
   const login = (token, userData) => {
     localStorage.setItem("sk_token", token);
     setUser(userData);
+    window.location.reload();
   };
 
   const logout = () => {
     localStorage.removeItem("sk_token");
     setUser(null);
+    window.location.reload();
   };
 
   return (

@@ -1,0 +1,297 @@
+.root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+}
+
+.rootVisible {
+  animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+  flex: 1;
+  padding: 80px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.deliveryInfo {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.planCard {
+  background: rgba(255,243,154,0.1);
+  border: 1px solid rgba(255,243,154,0.2);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.planName {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff39a;
+  margin: 0 0 8px;
+}
+
+.planStatus {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+.statusBadge {
+  display: inline-block;
+  background: rgba(34,160,107,0.15);
+  color: #22a06b;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(34,160,107,0.3);
+}
+
+.metaBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+}
+
+.metaBadge svg {
+  opacity: 0.5;
+}
+
+.rightPanel {
+  display: flex;
+}
+
+.rightInner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.successHeader {
+  text-align: center;
+}
+
+.iconWrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+}
+
+.iconRing {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #fff39a;
+  border-radius: 50%;
+  animation: ringScale 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes ringScale {
+  from { transform: scale(0.8); opacity: 1; }
+  to   { transform: scale(1.2); opacity: 0; }
+}
+
+.iconCircle {
+  position: absolute;
+  inset: 0;
+  background: #22a06b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkSvg {
+  width: 56px;
+  height: 56px;
+  color: white;
+}
+
+.checkPath {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: checkMark 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+
+@keyframes checkMark {
+  to { stroke-dashoffset: 0; }
+}
+
+.heading {
+  font-size: 44px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+
+.subtext {
+  font-size: 16px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,243,154,0.03) 100%);
+  border: 1.5px solid rgba(255,243,154,0.15);
+  border-radius: 20px;
+  padding: 32px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.cardLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin: 0 0 24px;
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.detailItem:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+}
+
+.detailValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btnPrimary {
+  display: inline-block;
+  background: #fff39a;
+  color: #0a0a0a;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.18s;
+}
+
+.btnPrimary:hover {
+  background: #ffe94d;
+  transform: translateY(-2px);
+}
+
+.btnOutline {
+  display: inline-block;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.18s;
+}
+
+.btnOutline:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .heading {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 60px 20px;
+  }
+
+  .deliveryInfo {
+    padding: 24px;
+  }
+
+  .heading {
+    font-size: 28px;
+  }
+
+  .card {
+    padding: 24px;
+  }
+}

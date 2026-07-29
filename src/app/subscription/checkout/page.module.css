@@ -1,0 +1,388 @@
+.root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  width: 100%;
+  align-items: start;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.deliveryInfo {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.planCard {
+  background: rgba(255,243,154,0.1);
+  border: 1px solid rgba(255,243,154,0.2);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.planName {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff39a;
+  margin: 0 0 8px;
+}
+
+.planType {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+.daysList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dayBadge {
+  display: inline-block;
+  background: rgba(255,243,154,0.15);
+  color: #fff39a;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(255,243,154,0.2);
+}
+
+.deliveryList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deliveryItem {
+  background: rgba(255,243,154,0.08);
+  border: 1px solid rgba(255,243,154,0.15);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.deliveryDate {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff39a;
+}
+
+.deliveryDay {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  text-align: left;
+}
+
+.heading {
+  font-size: 44px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+
+.subtext {
+  font-size: 16px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,243,154,0.03) 100%);
+  border: 1.5px solid rgba(255,243,154,0.15);
+  border-radius: 20px;
+  padding: 32px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+}
+
+.value {
+  font-weight: 700;
+  color: #fff;
+}
+
+.priceValue {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff39a;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255,243,154,0.2);
+  margin: 8px 0;
+}
+
+.terms {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.8;
+}
+
+.terms p {
+  margin: 8px 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirmBtn {
+  background: linear-gradient(135deg, #fff39a 0%, #ffe94d 100%);
+  color: #0a0a0a;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 8px 24px rgba(255,243,154,0.25);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffe94d 0%, #ffde00 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(255,243,154,0.35);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cancelLink {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.18s;
+  padding: 12px;
+}
+
+.cancelLink:hover {
+  color: #fff39a;
+}
+
+.paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.paymentElement {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.paymentElement :global(.StripeElement) {
+  color: #fff;
+}
+
+.paymentElement :global(.StripeElement::placeholder) {
+  color: rgba(255,255,255,0.4);
+}
+
+.paymentError {
+  background: rgba(255,100,100,0.1);
+  border: 1px solid rgba(255,100,100,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #ff9999;
+  font-size: 13px;
+}
+
+.errorCard {
+  background: rgba(255,100,100,0.1);
+  border: 1px solid rgba(255,100,100,0.3);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+}
+
+.errorText {
+  color: #ff9999;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.btnPrimary {
+  display: inline-block;
+  background: #fff39a;
+  color: #0a0a0a;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.18s;
+}
+
+.btnPrimary:hover {
+  background: #ffe94d;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .heading {
+    font-size: 36px;
+  }
+}
+
+.paymentModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.paymentModalContent {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 1.5px solid rgba(255,243,154,0.15);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+}
+
+.paymentModalHeader {
+  margin-bottom: 32px;
+}
+
+.paymentModalTitle {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.paymentModalSubtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+.paymentModalClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 24px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.paymentModalClose:hover {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 60px 20px;
+  }
+
+  .deliveryInfo {
+    padding: 24px;
+  }
+
+  .heading {
+    font-size: 28px;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  .paymentModalContent {
+    padding: 24px;
+  }
+
+  .paymentModalTitle {
+    font-size: 24px;
+  }
+}

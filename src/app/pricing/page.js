@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import AuthPanel from "../components/AuthPanel";
 import { api } from "../lib/api";
@@ -8,11 +9,13 @@ import { useAuth } from "../context/AuthContext";
 import styles from "./page.module.css";
 
 export default function PricingPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selecting, setSelecting] = useState(null);
 
   useEffect(() => {
     api.get("/api/subscriptions/available-plans")
@@ -24,6 +27,35 @@ export default function PricingPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSelectPlan = async (planId, patternId = null) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+
+    setSelecting(planId);
+    try {
+      const data = await api.post("/api/subscriptions/select-plan", {
+        planId,
+        patternId
+      });
+
+      sessionStorage.setItem("sk_subscription", JSON.stringify({
+        planId,
+        patternId,
+        subscription: data.subscription,
+        paymentIntentId: data.paymentIntentId,
+        clientSecret: data.clientSecret
+      }));
+
+      router.push("/subscription/checkout");
+    } catch (err) {
+      alert(err.error || "Failed to select plan");
+    } finally {
+      setSelecting(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -94,12 +126,29 @@ export default function PricingPage() {
                     )}
                   </div>
 
-                  <button
-                    className={styles.subscribeBtn}
-                    onClick={() => user ? alert("Subscription coming soon!") : setAuthOpen(true)}
-                  >
-                    {user ? "Subscribe Now" : "Sign in to Subscribe"}
-                  </button>
+                  {plan.type === "weekly" ? (
+                    <button
+                      className={styles.subscribeBtn}
+                      onClick={() => handleSelectPlan(plan._id, null)}
+                      disabled={selecting === plan._id}
+                    >
+                      {selecting === plan._id ? "Loading..." : "Subscribe Now"}
+                    </button>
+                  ) : (
+                    <div className={styles.patternButtons}>
+                      {plan.patterns?.map(pattern => (
+                        <button
+                          key={pattern.id}
+                          className={styles.subscribeBtn}
+                          onClick={() => handleSelectPlan(plan._id, pattern.id)}
+                          disabled={selecting === plan._id}
+                          style={{ fontSize: "13px", padding: "12px 20px" }}
+                        >
+                          {selecting === plan._id ? "Loading..." : pattern.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   <Link href="/contact" className={styles.learnMore}>
                     Learn more →

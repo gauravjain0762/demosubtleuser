@@ -16,10 +16,17 @@ export default function PricingPage() {
   useEffect(() => {
     api.get("/api/subscriptions/available-plans")
       .then(data => {
-        setPlans(data.plans || []);
+        if (data && Array.isArray(data.plans)) {
+          setPlans(data.plans);
+        } else if (data && Array.isArray(data)) {
+          setPlans(data);
+        } else {
+          setPlans([]);
+        }
       })
       .catch(err => {
         setError(err.error || "Failed to load plans");
+        setPlans([]);
       })
       .finally(() => setLoading(false));
   }, []);

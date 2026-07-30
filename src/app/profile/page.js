@@ -166,10 +166,13 @@ function SubscriptionsPanel() {
         if (sub) {
           setSub({
             ...sub,
-            pricePerWeek: sub.price / 100,
-            activeDays: sub.selectedDays,
+            mealName: sub.meal?.name,
+            mealPrice: sub.mealPrice,
+            planName: sub.plan?.name,
+            planType: sub.plan?.type,
+            activeDays: sub.pattern || [],
             nextDelivery: data.upcomingOrders?.[0]?.scheduledDate,
-            nextBilling: sub.nextBillingDate,
+            nextBilling: sub.nextChargeDate,
             startedOn: sub.createdAt || new Date().toISOString(),
           });
         } else {
@@ -216,7 +219,10 @@ function SubscriptionsPanel() {
           <div className={styles.subCard}>
             <div className={styles.subCardHeader}>
               <div className={styles.subCardTitleRow}>
-                <span className={styles.subCardName}>{sub.planName}</span>
+                <div>
+                  <span className={styles.subCardName}>{sub.mealName || "Meal"}</span>
+                  <span className={styles.subCardPlan}>{sub.planName}</span>
+                </div>
                 <span className={`${styles.subStatusBadge} ${paused ? styles.subStatusPaused : styles.subStatusActive}`}>
                   {paused ? (
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
@@ -226,11 +232,11 @@ function SubscriptionsPanel() {
                   {paused ? "Paused" : "Active"}
                 </span>
               </div>
-              {sub.pricePerWeek && (
+              {sub.mealPrice && (
                 <div className={styles.subCardPrice}>
-                  <span className={styles.subPriceAmount}>£{sub.pricePerWeek.toFixed(2)}</span>
+                  <span className={styles.subPriceAmount}>£{(sub.mealPrice * sub.quantity * (sub.activeDays?.length || 5)).toFixed(2)}</span>
                   <span className={styles.subPricePer}> / week</span>
-                  {sub.pricePerMeal && <span className={styles.subPricePerMeal}> · £{sub.pricePerMeal.toFixed(2)} per meal</span>}
+                  {sub.mealPrice && <span className={styles.subPricePerMeal}> · £{sub.mealPrice.toFixed(2)} per meal</span>}
                 </div>
               )}
             </div>

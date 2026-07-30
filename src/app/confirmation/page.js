@@ -71,23 +71,50 @@ function ConfirmationPageInner() {
     });
 
     if (sessionId) {
-      // Paid via Stripe Checkout — re-fetch the real, server-confirmed order
-      // by session id rather than trusting whatever was stored before redirect.
-      api.get(`/api/orders/by-session/${sessionId}`)
-        .then(data => {
-          setOrder({ ...data.order, items: enrichItems(data.order.items) });
-          sessionStorage.removeItem("sk_pending_order");
-          sessionStorage.removeItem("sk_confirmation");
-        })
-        .catch(err => {
-          // Fallback to pending order from sessionStorage if API fails (e.g., auth issues)
-          if (pending) {
-            setOrder({ ...pending, items: enrichItems(pending.items || []) });
-          } else {
-            setLoadError(err.error || "Could not load your order.");
-          }
-        })
-        .finally(() => setLoading(false));
+      // Checkout sessions start with "cs_" (Stripe Checkout)
+      // Payment Intents start with "pi_" (Stripe Elements)
+      const isCheckoutSession = sessionId.startsWith("cs_");
+      const isSubscriptionFlow = sessionStorage.getItem("sk_checkout_session_id") !== null;
+
+      if (isCheckoutSession || isSubscriptionFlow) {
+        // Subscription payment via Stripe Checkout
+        api.get(`/api/subscriptions/verify-checkout?session_id=${sessionId}`)
+          .then(data => {
+            if (data.success && data.subscription) {
+              // Display subscription confirmation
+              setOrder({
+                type: "subscription",
+                subscription: data.subscription,
+                items: [],
+              });
+            } else {
+              setLoadError(data.error || "Could not verify subscription.");
+            }
+            sessionStorage.removeItem("sk_pending_order");
+            sessionStorage.removeItem("sk_checkout_session_id");
+          })
+          .catch(err => {
+            setLoadError(err.error || "Could not load your subscription.");
+          })
+          .finally(() => setLoading(false));
+      } else {
+        // One-time order via Stripe Checkout or Elements
+        api.get(`/api/orders/by-session/${sessionId}`)
+          .then(data => {
+            setOrder({ ...data.order, items: enrichItems(data.order.items) });
+            sessionStorage.removeItem("sk_pending_order");
+            sessionStorage.removeItem("sk_confirmation");
+          })
+          .catch(err => {
+            // Fallback to pending order from sessionStorage if API fails
+            if (pending) {
+              setOrder({ ...pending, items: enrichItems(pending.items || []) });
+            } else {
+              setLoadError(err.error || "Could not load your order.");
+            }
+          })
+          .finally(() => setLoading(false));
+      }
     } else {
       // No Stripe checkout — /review already stored the confirmed order.
       let stored = null;

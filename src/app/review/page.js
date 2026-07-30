@@ -92,13 +92,23 @@ export default function ReviewPage() {
 
   // ── Plan selection ──
   const [selectedPlan, setSelectedPlan] = useState("one-time");
-  const [planModalOpen, setPlanModalOpen] = useState(null); // null | "weekly" | "one-off"
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedPattern, setSelectedPattern] = useState("");
+  const [deliveryDates, setDeliveryDates] = useState([]);
+  const [calculatedCharge, setCalculatedCharge] = useState(0);
+  const [selectPlanLoading, setSelectPlanLoading] = useState(false);
+  const [selectPlanError, setSelectPlanError] = useState("");
+  const [planIds, setPlanIds] = useState({ weekly: null, "one-off": null });
+  const [oneOffPatterns, setOneOffPatterns] = useState([]);
+  const [checkoutUrl, setCheckoutUrl] = useState("");
+  const [checkoutSessionId, setCheckoutSessionId] = useState("");
   const [plans, setPlans] = useState({
-    weekly: { name: "Weekly Plan", price: null, description: "Same dish delivered every selected day of the week at your scheduled lunch time. Perfect for consistent nutrition and meal planning." },
-    "one-off": { name: "One-off Plan", price: null, description: "Dish delivered on alternate days for 2 weeks. Great way to try our meals without long-term commitment." },
-    "one-time": { name: "One-time Order", price: null, description: "Single delivery only. No recurring charges. Perfect for trying out dishes." },
+    weekly: { name: "Weekly Meal Plan", description: "Delivered Monday to Friday every week. Perfect for consistent nutrition." },
+    "one-off": { name: "One-Off Alternating Days", description: "Flexible delivery on select days. Choose your pattern!" },
+    "one-time": { name: "One-Time Order", description: "Single delivery only. No recurring charges." },
   });
 
+  // Fetch plan IDs and patterns on mount
   useEffect(() => {
     api.get("/api/subscriptions/available-plans")
       .then(data => {
@@ -106,15 +116,82 @@ export default function ReviewPage() {
           const weeklyPlan = data.plans.find(p => p.type === "weekly");
           const oneOffPlan = data.plans.find(p => p.type === "one-off");
 
-          setPlans(prev => ({
-            ...prev,
-            weekly: { ...prev.weekly, price: weeklyPlan?.price },
-            "one-off": { ...prev["one-off"], price: oneOffPlan?.price },
-          }));
+          setPlanIds({
+            weekly: weeklyPlan?._id || null,
+            "one-off": oneOffPlan?._id || null,
+          });
+
+          // Extract one-off patterns
+          if (oneOffPlan?.patterns && Array.isArray(oneOffPlan.patterns)) {
+            setOneOffPatterns(oneOffPlan.patterns);
+            // Set default pattern to first available
+            if (oneOffPlan.patterns.length > 0) {
+              setSelectedPattern(oneOffPlan.patterns[0].id);
+            }
+          }
         }
       })
       .catch(() => {});
   }, []);
+
+  // Call select-plan endpoint when plan/date/pattern changes
+  useEffect(() => {
+    if (selectedPlan === "one-time" || items.length === 0) {
+      setDeliveryDates([]);
+      setCalculatedCharge(0);
+      return;
+    }
+
+    // For one-off, must have pattern selected
+    if (selectedPlan === "one-off" && !selectedPattern) {
+      setSelectPlanError("Please select a delivery pattern");
+      setDeliveryDates([]);
+      setCalculatedCharge(0);
+      return;
+    }
+
+    // Don't call if plan IDs aren't loaded yet
+    const planId = selectedPlan === "weekly" ? planIds.weekly : planIds["one-off"];
+    if (!planId) return;
+
+    setSelectPlanLoading(true);
+    setSelectPlanError("");
+
+    const firstItem = items[0];
+    api.post("/api/subscriptions/select-plan", {
+      planId: planId,
+      mealId: firstItem.dishId,
+      mealPrice: firstItem.price,
+      quantity: firstItem.qty || 1,
+      startDate: startDate,
+      ...(selectedPlan === "one-off" && { patternId: selectedPattern }),
+    })
+      .then(data => {
+        const charge = data.summary?.totalCharge || 0;
+        // Stripe minimum for GBP is £0.30
+        if (charge < 0.30) {
+          setSelectPlanError(`Minimum charge is £0.30. Current charge is £${charge.toFixed(2)}. Try adding more servings or selecting a later start date.`);
+          setDeliveryDates([]);
+          setCalculatedCharge(0);
+          setCheckoutUrl("");
+          setCheckoutSessionId("");
+        } else {
+          setDeliveryDates(data.deliveryDates || []);
+          setCalculatedCharge(charge);
+          setCheckoutUrl(data.checkoutUrl || "");
+          setCheckoutSessionId(data.checkoutSessionId || "");
+          setSelectPlanError("");
+        }
+      })
+      .catch(err => {
+        setSelectPlanError(err.error || "Failed to calculate subscription");
+        setDeliveryDates([]);
+        setCalculatedCharge(0);
+        setCheckoutUrl("");
+        setCheckoutSessionId("");
+      })
+      .finally(() => setSelectPlanLoading(false));
+  }, [selectedPlan, startDate, selectedPattern, items, planIds]);
 
   // ── Order submission ──
   const [submitting, setSubmitting] = useState(false);
@@ -132,15 +209,15 @@ export default function ReviewPage() {
   const getDishSubtotal = () => items.reduce((s, i) => s + ((i.price || 0) * (i.qty || 1)) + getAddonTotal(i), 0);
   const dishSubtotal = getDishSubtotal();
 
-  // Determine actual price based on plan selection
+  // For one-time orders, use dish subtotal; for subscriptions, use backend-calculated charge
   const getOrderPrice = () => {
-    if (selectedPlan === "one-time") return dishSubtotal;
-    const planPrice = plans[selectedPlan]?.price;
-    return planPrice !== null && planPrice !== undefined ? planPrice : dishSubtotal;
+    if (selectedPlan === "one-time") {
+      return dishSubtotal;
+    }
+    return calculatedCharge > 0 ? calculatedCharge : dishSubtotal;
   };
-  const orderPrice = getOrderPrice();
 
-  const subtotal = orderPrice;
+  const subtotal = getOrderPrice();
   const discount = promoApplied && promoDiscount
     ? promoDiscount.type === "percentage"
       ? subtotal * (promoDiscount.value / 100)
@@ -153,7 +230,13 @@ export default function ReviewPage() {
 
   const handlePlaceOrder = async () => {
     if (!user) { setAuthOpen(true); return; }
-    if (!order) return;
+    if (!order || items.length === 0) return;
+
+    // For subscription orders, validate we only have one meal
+    if (selectedPlan !== "one-time" && items.length > 1) {
+      setSubmitError("Subscription plans work with one meal at a time. Please remove extra items.");
+      return;
+    }
 
     // Validate quantity ranges
     for (const item of items) {
@@ -173,61 +256,89 @@ export default function ReviewPage() {
       }
     }
 
+    // Validate subscription charge meets Stripe minimum (£0.30 for GBP)
+    if (selectedPlan !== "one-time" && calculatedCharge < 0.30) {
+      setSubmitError("Subscription charge is below minimum (£0.30). Please increase quantity or select a later start date.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError("");
     try {
-      const data = await api.post("/api/orders", {
-        workspaceCode:       order.workspaceCode || user.workspaceCode,
-        deliveryDate:        order.deliveryDate,
-        lunchTime:           order.lunchTime,
-        isWeeklySubscription: order.isWeeklySubscription || false,
-        planType:            selectedPlan,
-        planPrice:           getOrderPrice(),
-        ...(promoApplied && promo ? { promoCode: promo } : {}),
-        items: items.map(item => ({
-          dishId:      item.dishId,
-          portionSize: item.portionSize || (item.portion === "large" ? "Large" : "Regular"),
-          qty:         item.qty || 1,
-          addons:  item.addons || [],
-        })),
-        useStripeCheckout: true,
-      });
+      // Different endpoints for subscriptions vs one-time orders
+      if (selectedPlan === "one-time") {
+        // One-time order via existing orders endpoint
+        const data = await api.post("/api/orders", {
+          workspaceCode:       order.workspaceCode || user.workspaceCode,
+          deliveryDate:        order.deliveryDate,
+          lunchTime:           order.lunchTime,
+          planType:            "one-time",
+          planPrice:           getOrderPrice(),
+          ...(promoApplied && promo ? { promoCode: promo } : {}),
+          items: items.map(item => ({
+            dishId:      item.dishId,
+            portionSize: item.portionSize || (item.portion === "large" ? "Large" : "Regular"),
+            qty:         item.qty || 1,
+            addons:  item.addons || [],
+          })),
+          useStripeCheckout: true,
+        });
+        handleOrderResponse(data);
+      } else {
+        // Subscription order - redirect to Stripe Checkout
+        if (!checkoutUrl) {
+          setSubmitError("Checkout URL not ready. Please refresh and try again.");
+          setSubmitting(false);
+          return;
+        }
 
-      const localItems = order?.items || [];
-      const enrichItems = (apiItems) => (apiItems?.length ? apiItems : localItems).map(apiItem => {
-        const local = localItems.find(li => String(li.dishId) === String(apiItem.dishId));
-        return {
-          dishId:      apiItem.dishId      || local?.dishId      || "",
-          dishName:    apiItem.dishName    || local?.dishName    || "",
-          portionSize: apiItem.portionSize || local?.portionSize || "",
-          qty:         apiItem.qty         ?? local?.qty         ?? 1,
-          addons:      apiItem.addons      || local?.addons      || [],
-          price:       apiItem.price       ?? local?.price       ?? 0,
-          img:         apiItem.img         || local?.img         || "",
-          tags:        local?.tags         || [],
-        };
-      });
+        // Clear order from sessionStorage before redirecting to Stripe
+        sessionStorage.removeItem("sk_order");
 
-      sessionStorage.removeItem("sk_order");
+        // Store session ID for verification after payment
+        sessionStorage.setItem("sk_checkout_session_id", checkoutSessionId);
 
-      if (data.checkoutUrl) {
-        // Stash local image/name data so /confirmation can enrich the order
-        // it re-fetches by Stripe session id once payment completes.
-        sessionStorage.setItem("sk_pending_order", JSON.stringify({ items: localItems }));
-        window.location.href = data.checkoutUrl;
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutUrl;
         return;
       }
-
-      // No Stripe checkout — order is already confirmed, go straight there.
-      sessionStorage.setItem("sk_confirmation", JSON.stringify({
-        ...data.order,
-        items: enrichItems(data.order.items),
-      }));
-      router.push("/confirmation");
     } catch (err) {
       setSubmitError(err.error || "Failed to place order. Please try again.");
       setSubmitting(false);
     }
+  };
+
+  const handleOrderResponse = (data) => {
+    const localItems = order?.items || [];
+    const enrichItems = (apiItems) => (apiItems?.length ? apiItems : localItems).map(apiItem => {
+      const local = localItems.find(li => String(li.dishId) === String(apiItem.dishId));
+      return {
+        dishId:      apiItem.dishId      || local?.dishId      || "",
+        dishName:    apiItem.dishName    || local?.dishName    || "",
+        portionSize: apiItem.portionSize || local?.portionSize || "",
+        qty:         apiItem.qty         ?? local?.qty         ?? 1,
+        addons:      apiItem.addons      || local?.addons      || [],
+        price:       apiItem.price       ?? local?.price       ?? 0,
+        img:         apiItem.img         || local?.img         || "",
+        tags:        local?.tags         || [],
+      };
+    });
+
+    sessionStorage.removeItem("sk_order");
+
+    if (data.checkoutUrl) {
+      sessionStorage.setItem("sk_pending_order", JSON.stringify({ items: localItems }));
+      window.location.href = data.checkoutUrl;
+      return;
+    }
+
+    // Order confirmed without Stripe
+    sessionStorage.setItem("sk_confirmation", JSON.stringify({
+      ...data.order,
+      items: enrichItems(data.order.items),
+    }));
+    router.push("/confirmation");
+    setSubmitting(false);
   };
 
   return (
@@ -450,43 +561,70 @@ export default function ReviewPage() {
                     />
                     <div className={styles.planCardContent}>
                       <p className={styles.planCardName}>{plan.name}</p>
-                      <p className={styles.planCardPrice}>
-                        {key === "one-time"
-                          ? "Pay per meal"
-                          : plan.price !== null
-                            ? `£${(plan.price / 100).toFixed(2)}`
-                            : "Loading..."}
-                      </p>
-                      {key !== "one-time" && (
-                        <button
-                          type="button"
-                          className={styles.planLearnMoreBtn}
-                          onClick={(e) => { e.preventDefault(); setPlanModalOpen(key); }}
-                        >
-                          Learn more →
-                        </button>
-                      )}
+                      <p className={styles.planCardDescription}>{plan.description}</p>
                     </div>
                   </label>
                 ))}
               </div>
-            </div>
 
-            {/* Plan Description Modal */}
-            {planModalOpen && (
-              <div className={styles.planModalOverlay} onClick={() => setPlanModalOpen(null)}>
-                <div className={styles.planModal} onClick={e => e.stopPropagation()}>
-                  <div className={styles.planModalHeader}>
-                    <h2 className={styles.planModalTitle}>{plans[planModalOpen]?.name}</h2>
-                    <button className={styles.planModalClose} onClick={() => setPlanModalOpen(null)}>✕</button>
+              {/* Subscription Options */}
+              {selectedPlan !== "one-time" && (
+                <div className={styles.subscriptionOptions}>
+                  <div className={styles.optionGroup}>
+                    <label className={styles.optionLabel}>Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className={styles.dateInput}
+                    />
                   </div>
-                  <p className={styles.planModalDescription}>{plans[planModalOpen]?.description}</p>
-                  <button className={styles.planModalSelectBtn} onClick={() => { setSelectedPlan(planModalOpen); setPlanModalOpen(null); }}>
-                    Select this plan
-                  </button>
+
+                  {selectedPlan === "one-off" && (
+                    <div className={styles.optionGroup}>
+                      <label className={styles.optionLabel}>Delivery Pattern</label>
+                      <select
+                        value={selectedPattern}
+                        onChange={(e) => setSelectedPattern(e.target.value)}
+                        className={styles.patternSelect}
+                      >
+                        <option value="">Select a pattern...</option>
+                        {oneOffPatterns.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.days.join(", ")})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Delivery Dates Summary */}
+              {selectedPlan !== "one-time" && deliveryDates.length > 0 && (
+                <div className={styles.deliverySummary}>
+                  <p className={styles.deliveryTitle}>📅 Deliveries this week:</p>
+                  <div className={styles.deliveryDatesList}>
+                    {deliveryDates.map((date, idx) => (
+                      <span key={idx} className={styles.deliveryDateBadge}>
+                        {date.dayOfWeek} {new Date(date.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                      </span>
+                    ))}
+                  </div>
+                  <p className={styles.chargeSummary}>
+                    Charge: £{calculatedCharge.toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              {selectPlanError && (
+                <p className={styles.planError}>{selectPlanError}</p>
+              )}
+
+              {selectPlanLoading && selectedPlan !== "one-time" && (
+                <p className={styles.planLoading}>Calculating delivery dates...</p>
+              )}
+            </div>
 
             {submitError && (
               <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>{submitError}</p>

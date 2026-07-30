@@ -1032,8 +1032,8 @@ export default function MenuPage() {
                     <div key={k} className={styles.basketItem}>
                       <div className={styles.basketItemLeft}>
                         <div className={styles.basketDay}>
-                          <span className={styles.basketDayNum}>{menuDays[d]?.date.split(" ")[0]}</span>
-                          <span className={styles.basketDayMon}>{menuDays[d]?.date.split(" ")[1]}</span>
+                          <span className={styles.basketDayNum}>{selectedDate ? selectedDate.getDate() : "—"}</span>
+                          <span className={styles.basketDayMon}>{selectedDate ? selectedDate.toLocaleDateString("en-GB", { month: "short" }).toUpperCase() : "—"}</span>
                         </div>
                         <div className={styles.basketDetails}>
                           <p className={styles.basketName}>{dish.name}</p>

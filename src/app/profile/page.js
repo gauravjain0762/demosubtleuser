@@ -153,10 +153,6 @@ function OrdersPanel() {
   );
 }
 
-const OTHER_PLANS = [
-  { name: "One-Off Order", days: "No commitment · pay per meal", price: null, perMeal: 10.50, tag: "Flexible" },
-];
-
 function SubscriptionsPanel() {
   const [sub, setSub]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -167,14 +163,19 @@ function SubscriptionsPanel() {
     api.get("/api/subscriptions/my-plan")
       .then(data => {
         const sub = data.subscription;
-        setSub({
-          ...sub,
-          pricePerWeek: sub.price / 100,
-          activeDays: sub.selectedDays,
-          nextDelivery: data.upcomingOrders?.[0]?.scheduledDate,
-          nextBilling: sub.nextBillingDate,
-          startedOn: sub.createdAt || new Date().toISOString(),
-        });
+        if (sub) {
+          setSub({
+            ...sub,
+            pricePerWeek: sub.price / 100,
+            activeDays: sub.selectedDays,
+            nextDelivery: data.upcomingOrders?.[0]?.scheduledDate,
+            nextBilling: sub.nextBillingDate,
+            startedOn: sub.createdAt || new Date().toISOString(),
+          });
+        } else {
+          setSub(null);
+        }
+        setError("");
       })
       .catch(() => setError("Failed to load subscription."))
       .finally(() => setLoading(false));
@@ -206,7 +207,8 @@ function SubscriptionsPanel() {
         <p style={{ opacity: 0.5, padding: "20px 0" }}>{error}</p>
       ) : !sub ? (
         <div className={styles.emptyOrders}>
-          <p>No active subscription. <Link href="/pricing" className={styles.emptyLink}>View plans →</Link></p>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.25, marginBottom: "12px" }}><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <p>You haven't subscribed to any plan yet. <Link href="/pricing" className={styles.emptyLink}>Browse plans →</Link></p>
         </div>
       ) : (
         <>
@@ -275,21 +277,6 @@ function SubscriptionsPanel() {
         </>
       )}
 
-      {/* ── Other plans ── */}
-      <h3 className={styles.subOtherHeading}>Other plans</h3>
-      <div className={styles.subOtherGrid}>
-        {OTHER_PLANS.map(p => (
-          <div key={p.name} className={styles.subOtherCard}>
-            {p.tag && <span className={styles.subOtherTag}>{p.tag}</span>}
-            <p className={styles.subOtherName}>{p.name}</p>
-            <p className={styles.subOtherDays}>{p.days}</p>
-            <p className={styles.subOtherPrice}>
-              {p.price ? <>£{p.price.toFixed(2)}<span className={styles.subOtherPriceSub}>/wk</span></> : <>From £{p.perMeal.toFixed(2)}<span className={styles.subOtherPriceSub}>/meal</span></>}
-            </p>
-            <Link href="/pricing" className={styles.subOtherBtn}>Switch plan</Link>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

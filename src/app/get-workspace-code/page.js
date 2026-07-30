@@ -25,6 +25,23 @@ const BENEFITS = [
   { icon: "🍱", text: "Fresh chef-prepared meals daily" },
 ];
 
+const COUNTRY_CODES = [
+  { code: "+44", label: "🇬🇧 United Kingdom (+44)" },
+  { code: "+1", label: "🇺🇸 United States (+1)" },
+  { code: "+1", label: "🇨🇦 Canada (+1)" },
+  { code: "+33", label: "🇫🇷 France (+33)" },
+  { code: "+49", label: "🇩🇪 Germany (+49)" },
+  { code: "+39", label: "🇮🇹 Italy (+39)" },
+  { code: "+34", label: "🇪🇸 Spain (+34)" },
+  { code: "+31", label: "🇳🇱 Netherlands (+31)" },
+  { code: "+32", label: "🇧🇪 Belgium (+32)" },
+  { code: "+46", label: "🇸🇪 Sweden (+46)" },
+  { code: "+47", label: "🇳🇴 Norway (+47)" },
+  { code: "+61", label: "🇦🇺 Australia (+61)" },
+  { code: "+64", label: "🇳🇿 New Zealand (+64)" },
+  { code: "+91", label: "🇮🇳 India (+91)" },
+];
+
 export default function GetWorkspaceCodePage() {
   const [step, setStep]         = useState(1);
   const [errors, setErrors]     = useState({});
@@ -35,11 +52,12 @@ export default function GetWorkspaceCodePage() {
   const [workspace, setWorkspace] = useState({
     name: "", address1: "",
     town: "", city: "", county: "", postcode: "",
+    country: "GB",
     deliveryTimes: [""],   // index 0 = main, 1+ = Break 1, Break 2…
     employees: "", premiseType: "",
   });
   const [contact, setContact] = useState({
-    firstName: "", lastName: "", email: "", phone: "", notes: "",
+    firstName: "", lastName: "", email: "", countryCode: "+44", phone: "", notes: "",
   });
 
   const setW  = (k, v) => { setWorkspace(p => ({ ...p, [k]: v })); setErrors(e => ({ ...e, [k]: "" })); };
@@ -90,7 +108,7 @@ export default function GetWorkspaceCodePage() {
           city:          workspace.city,
           county:        workspace.county,
           postcode:      workspace.postcode,
-          country:       "GB",
+          country:       workspace.country,
           deliveryTimes: workspace.deliveryTimes.filter(t => t.trim()),
           employees:     workspace.employees,
           premiseType:   workspace.premiseType,
@@ -99,6 +117,7 @@ export default function GetWorkspaceCodePage() {
           firstName: contact.firstName,
           lastName:  contact.lastName,
           email:     contact.email,
+          countryCode: contact.countryCode,
           phone:     contact.phone,
           notes:     contact.notes,
         },
@@ -230,10 +249,17 @@ export default function GetWorkspaceCodePage() {
                 </div>
 
                 <div className={styles.field} style={{ "--fi": 6 }}>
-                  <label className={styles.label}>Country</label>
-                  <div className={styles.countryStatic}>
-                    United Kingdom
-                  </div>
+                  <label className={styles.label}>Country <span className={styles.req}>*</span></label>
+                  <select className={`${styles.input} ${styles.select}`}
+                    value={workspace.country} onChange={e => setW("country", e.target.value)}>
+                    <option value="GB">🇬🇧 United Kingdom</option>
+                    <option value="US">🇺🇸 United States</option>
+                    <option value="CA">🇨🇦 Canada</option>
+                    <option value="AU">🇦🇺 Australia</option>
+                    <option value="NZ">🇳🇿 New Zealand</option>
+                    <option value="IN">🇮🇳 India</option>
+                    <option value="SG">🇸🇬 Singapore</option>
+                  </select>
                 </div>
 
                 {/* Delivery times */}
@@ -341,9 +367,30 @@ export default function GetWorkspaceCodePage() {
 
                 <div className={styles.field} style={{ "--fi": 3 }}>
                   <label className={styles.label}>Designated phone number <span className={styles.req}>*</span></label>
-                  <input type="tel" className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
-                    placeholder="+44 7700 000000" value={contact.phone}
-                    onChange={e => setCt("phone", e.target.value)} />
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <div className={styles.countryCodeDropdown}>
+                      <select
+                        value={contact.countryCode}
+                        onChange={e => setCt("countryCode", e.target.value)}
+                        className={styles.countryCodeSelect}
+                      >
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code + c.label} value={c.code}>{c.label}</option>
+                        ))}
+                      </select>
+                      <span className={styles.countryCodeDisplay}>
+                        {COUNTRY_CODES.find(c => c.code === contact.countryCode)?.label.split(" ")[0]} {contact.countryCode}
+                      </span>
+                    </div>
+                    <input
+                      type="tel"
+                      className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
+                      placeholder="7700 000000"
+                      value={contact.phone}
+                      onChange={e => setCt("phone", e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
                   {errors.phone && <p className={styles.errMsg}>{errors.phone}</p>}
                 </div>
 

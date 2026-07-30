@@ -295,7 +295,8 @@ export default function ReviewPage() {
         // Clear order from sessionStorage before redirecting to Stripe
         sessionStorage.removeItem("sk_order");
 
-        // Store session ID for verification after payment
+        // Store order type and session ID for verification after payment
+        sessionStorage.setItem("sk_order_type", "subscription");
         sessionStorage.setItem("sk_checkout_session_id", checkoutSessionId);
 
         // Redirect to Stripe Checkout
@@ -327,6 +328,7 @@ export default function ReviewPage() {
     sessionStorage.removeItem("sk_order");
 
     if (data.checkoutUrl) {
+      sessionStorage.setItem("sk_order_type", "one-time");
       sessionStorage.setItem("sk_pending_order", JSON.stringify({ items: localItems }));
       window.location.href = data.checkoutUrl;
       return;

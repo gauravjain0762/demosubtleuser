@@ -71,12 +71,10 @@ function ConfirmationPageInner() {
     });
 
     if (sessionId) {
-      // Checkout sessions start with "cs_" (Stripe Checkout)
-      // Payment Intents start with "pi_" (Stripe Elements)
-      const isCheckoutSession = sessionId.startsWith("cs_");
-      const isSubscriptionFlow = sessionStorage.getItem("sk_checkout_session_id") !== null;
+      // Check explicit order type flag set during checkout
+      const orderType = sessionStorage.getItem("sk_order_type");
 
-      if (isCheckoutSession || isSubscriptionFlow) {
+      if (orderType === "subscription") {
         // Subscription payment via Stripe Checkout
         api.get(`/api/subscriptions/verify-checkout?session_id=${sessionId}`)
           .then(data => {
@@ -92,18 +90,20 @@ function ConfirmationPageInner() {
             }
             sessionStorage.removeItem("sk_pending_order");
             sessionStorage.removeItem("sk_checkout_session_id");
+            sessionStorage.removeItem("sk_order_type");
           })
           .catch(err => {
             setLoadError(err.error || "Could not load your subscription.");
           })
           .finally(() => setLoading(false));
-      } else {
-        // One-time order via Stripe Checkout or Elements
+      } else if (orderType === "one-time") {
+        // One-time order via Stripe Checkout
         api.get(`/api/orders/by-session/${sessionId}`)
           .then(data => {
             setOrder({ ...data.order, items: enrichItems(data.order.items) });
             sessionStorage.removeItem("sk_pending_order");
             sessionStorage.removeItem("sk_confirmation");
+            sessionStorage.removeItem("sk_order_type");
           })
           .catch(err => {
             // Fallback to pending order from sessionStorage if API fails
@@ -114,6 +114,10 @@ function ConfirmationPageInner() {
             }
           })
           .finally(() => setLoading(false));
+      } else {
+        // No order type flag — shouldn't happen but handle gracefully
+        setLoadError("Order type not found. Please try placing your order again.");
+        setLoading(false);
       }
     } else {
       // No Stripe checkout — /review already stored the confirmed order.

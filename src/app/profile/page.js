@@ -164,8 +164,18 @@ function SubscriptionsPanel() {
   const [error, setError]   = useState("");
 
   useEffect(() => {
-    api.get("/api/subscriptions/my")
-      .then(data => setSub(data.subscription))
+    api.get("/api/subscriptions/my-plan")
+      .then(data => {
+        const sub = data.subscription;
+        setSub({
+          ...sub,
+          pricePerWeek: sub.price / 100,
+          activeDays: sub.selectedDays,
+          nextDelivery: data.upcomingOrders?.[0]?.scheduledDate,
+          nextBilling: sub.nextBillingDate,
+          startedOn: sub.createdAt || new Date().toISOString(),
+        });
+      })
       .catch(() => setError("Failed to load subscription."))
       .finally(() => setLoading(false));
   }, []);
@@ -292,7 +302,7 @@ function FavoritesPanel() {
 
   useEffect(() => {
     api.get("/api/favorites")
-      .then(data => setFavorites(data.favorites || []))
+      .then(data => setFavorites(data.dishes || []))
       .catch(() => setError("Failed to load favorites."))
       .finally(() => setLoading(false));
   }, []);
@@ -320,31 +330,45 @@ function FavoritesPanel() {
           <p>No favorites yet. <Link href="/menu" className={styles.emptyLink}>Browse the menu →</Link></p>
         </div>
       ) : (
-        <div className={styles.favGrid}>
-          {favorites.map((fav) => {
-            const dishId = fav.dishId || fav._id;
-            const name   = fav.dishName || fav.name;
-            const img    = fav.img || fav.images?.[0];
-            const price  = Number(fav.price) || 0;
-            return (
-              <div key={dishId} className={styles.favCard}>
-                {img && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img} alt={name} className={styles.favImg} />
-                )}
-                <div className={styles.favBody}>
-                  <p className={styles.favName}>{name}</p>
-                  <p className={styles.favPrice}>£{price.toFixed(2)}</p>
-                  <div className={styles.favActions}>
-                    <button className={styles.reorderBtn} onClick={() => handleOrder(fav)}>Order now</button>
-                    <button className={styles.favRemoveBtn} onClick={() => removeFavorite(dishId)} aria-label="Remove from favorites">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    </button>
+        <div className={styles.favScroll}>
+          <div className={styles.favList}>
+            {favorites.map((fav) => {
+              const dishId = fav.dishId || fav._id;
+              const name   = fav.dishName || fav.name;
+              const img    = fav.img || fav.images?.[0];
+              const category = fav.category || "";
+              const price  = Number(fav.price) || 0;
+              return (
+                <div key={dishId} className={styles.favCardRow}>
+                  <div className={styles.favCardImg}>
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img} alt={name} className={styles.favCardImgEl} />
+                    ) : (
+                      <div className={styles.favCardImgPlaceholder}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.favCardInfo}>
+                    <div className={styles.favCardTop}>
+                      <div>
+                        <p className={styles.favCardName}>{name}</p>
+                        {category && <p className={styles.favCardCategory}>{category}</p>}
+                      </div>
+                      <span className={styles.favCardPrice}>£{price.toFixed(2)}</span>
+                    </div>
+                    <div className={styles.favCardActions}>
+                      <button className={styles.reorderBtn} onClick={() => handleOrder(fav)}>Order now</button>
+                      <button className={styles.favRemoveBtn} onClick={() => removeFavorite(dishId)} aria-label="Remove from favorites">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

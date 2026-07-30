@@ -90,6 +90,28 @@ export default function ReviewPage() {
     }
   };
 
+  // ── Plan selection ──
+  const [selectedPlan, setSelectedPlan] = useState("one-time");
+  const [planModalOpen, setPlanModalOpen] = useState(null); // null | "weekly" | "one-off"
+
+  const PLANS = {
+    weekly: {
+      name: "Weekly Plan",
+      price: "£8.00",
+      description: "Same dish delivered every selected day of the week at your scheduled lunch time. Perfect for consistent nutrition and meal planning.",
+    },
+    "one-off": {
+      name: "One-off Plan",
+      price: "£5.00",
+      description: "Dish delivered on alternate days for 2 weeks. Great way to try our meals without long-term commitment.",
+    },
+    "one-time": {
+      name: "One-time Order",
+      price: "Pay per meal",
+      description: "Single delivery only. No recurring charges. Perfect for trying out dishes.",
+    },
+  };
+
   // ── Order submission ──
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -143,6 +165,7 @@ export default function ReviewPage() {
         deliveryDate:        order.deliveryDate,
         lunchTime:           order.lunchTime,
         isWeeklySubscription: order.isWeeklySubscription || false,
+        planType:            selectedPlan,
         ...(promoApplied && promo ? { promoCode: promo } : {}),
         items: items.map(item => ({
           dishId:      item.dishId,
@@ -390,6 +413,54 @@ export default function ReviewPage() {
                       </div>
                     </>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Plan Selection */}
+            <div className={styles.planSection}>
+              <h3 className={styles.planSectionTitle}>Select your delivery plan</h3>
+              <div className={styles.plansGrid}>
+                {Object.entries(PLANS).map(([key, plan]) => (
+                  <label key={key} className={`${styles.planCard} ${selectedPlan === key ? styles.planCardSelected : ""}`}>
+                    <input
+                      type="radio"
+                      name="plan"
+                      value={key}
+                      checked={selectedPlan === key}
+                      onChange={() => setSelectedPlan(key)}
+                      className={styles.planRadio}
+                    />
+                    <div className={styles.planCardContent}>
+                      <p className={styles.planCardName}>{plan.name}</p>
+                      <p className={styles.planCardPrice}>{plan.price}</p>
+                      {key !== "one-time" && (
+                        <button
+                          type="button"
+                          className={styles.planLearnMoreBtn}
+                          onClick={(e) => { e.preventDefault(); setPlanModalOpen(key); }}
+                        >
+                          Learn more →
+                        </button>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Plan Description Modal */}
+            {planModalOpen && (
+              <div className={styles.planModalOverlay} onClick={() => setPlanModalOpen(null)}>
+                <div className={styles.planModal} onClick={e => e.stopPropagation()}>
+                  <div className={styles.planModalHeader}>
+                    <h2 className={styles.planModalTitle}>{PLANS[planModalOpen].name}</h2>
+                    <button className={styles.planModalClose} onClick={() => setPlanModalOpen(null)}>✕</button>
+                  </div>
+                  <p className={styles.planModalDescription}>{PLANS[planModalOpen].description}</p>
+                  <button className={styles.planModalSelectBtn} onClick={() => { setSelectedPlan(planModalOpen); setPlanModalOpen(null); }}>
+                    Select this plan
+                  </button>
                 </div>
               </div>
             )}

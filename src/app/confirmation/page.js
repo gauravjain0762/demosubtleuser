@@ -211,62 +211,117 @@ function ConfirmationPageInner() {
         <div className={styles.rightPanel}>
           <div className={styles.rightInner}>
 
-            <div className={styles.successHeader}>
-              <div className={styles.iconWrap}>
-                <div className={styles.iconRing} />
-                <div className={styles.iconCircle}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.checkSvg}>
-                    <polyline className={styles.checkPath} points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-              </div>
-              <h1 className={styles.heading}>Order confirmed! 🎉</h1>
-              <p className={styles.subtext}>Your lunch is on its way to <strong>{workspaceName}.</strong></p>
-            </div>
-
-            <div className={styles.card}>
-              <p className={styles.cardLabel}>YOUR ORDER</p>
-              <div className={styles.orderItems}>
-                {items.map((item, i) => (
-                  <div key={i} className={styles.orderItem}>
-                    <div className={styles.dayBadge}>
-                      <span className={styles.dayName}>{dayName}</span>
-                      <span className={styles.dayDate}>{dayNum}</span>
+            {order?.type === "subscription" ? (
+              <>
+                <div className={styles.successHeader}>
+                  <div className={styles.iconWrap}>
+                    <div className={styles.iconRing} />
+                    <div className={styles.iconCircle}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.checkSvg}>
+                        <polyline className={styles.checkPath} points="20 6 9 17 4 12" />
+                      </svg>
                     </div>
-                    {item.img && (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={item.img} alt={item.dishName} className={styles.mealImg} />
-                    )}
-                    <div className={styles.mealInfo}>
-                      <span className={styles.mealName}>{item.dishName}</span>
-                      <div className={styles.mealMeta}>
-                        <span>{item.portionSize} Portion</span>
-                        {(item.tags || []).map(t => <span key={t} className={styles.tag}>· {t}</span>)}
-                        {item.qty > 1 && <span className={styles.tag}>· x{item.qty}</span>}
+                  </div>
+                  <h1 className={styles.heading}>Subscription activated! 🎉</h1>
+                  <p className={styles.subtext}>Your meal subscription is now active and will be delivered to <strong>{workspaceName}.</strong></p>
+                </div>
+
+                <div className={styles.card}>
+                  <p className={styles.cardLabel}>YOUR SUBSCRIPTION</p>
+                  <div className={styles.orderItems}>
+                    <div className={styles.orderItem}>
+                      <div className={styles.dayBadge}>
+                        <span className={styles.dayName}>Recur</span>
+                        <span className={styles.dayDate}>📅</span>
+                      </div>
+                      <div className={styles.mealInfo}>
+                        <span className={styles.mealName}>{order?.subscription?.meal?.name || "Meal"}</span>
+                        <div className={styles.mealMeta}>
+                          <span>Plan: {order?.subscription?.pattern ? order.subscription.pattern.join(", ") : "Weekly"}</span>
+                          <span className={styles.tag}>· Qty: {order?.subscription?.quantity}</span>
+                        </div>
                       </div>
                     </div>
-                    <span className={styles.mealPrice}>£{(Number(item.price) * (item.qty || 1)).toFixed(2)}</span>
                   </div>
-                ))}
-              </div>
 
-              {discount > 0 && (
-                <div className={styles.totalRow} style={{ opacity: 0.65 }}>
-                  <span className={styles.totalLabel}>Subtotal</span>
-                  <span className={styles.totalAmt}>£{subtotal.toFixed(2)}</span>
+                  <div className={styles.totalRow} style={{ opacity: 0.65 }}>
+                    <span className={styles.totalLabel}>Price per meal</span>
+                    <span className={styles.totalAmt}>£{Number(order?.subscription?.mealPrice).toFixed(2)}</span>
+                  </div>
+                  <div className={styles.totalRow} style={{ opacity: 0.65 }}>
+                    <span className={styles.totalLabel}>Delivery days per week</span>
+                    <span className={styles.totalAmt}>{order?.subscription?.pattern?.length || 5}</span>
+                  </div>
+                  <div className={styles.totalRow}>
+                    <span className={styles.totalLabel}>First charge</span>
+                    <span className={styles.totalAmt}>£{(Number(order?.subscription?.mealPrice) * (order?.subscription?.quantity || 1) * (order?.subscription?.pattern?.length || 5)).toFixed(2)}</span>
+                  </div>
+                  <div className={styles.totalRow} style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee" }}>
+                    <span className={styles.totalLabel}>Next billing date</span>
+                    <span className={styles.totalAmt}>{order?.subscription?.nextChargeDate ? new Date(order.subscription.nextChargeDate).toLocaleDateString("en-GB") : "—"}</span>
+                  </div>
                 </div>
-              )}
-              {discount > 0 && (
-                <div className={styles.totalRow} style={{ color: "#22a06b" }}>
-                  <span className={styles.totalLabel}>Discount ({order?.discount?.label})</span>
-                  <span className={styles.totalAmt}>−£{discount.toFixed(2)}</span>
+              </>
+            ) : (
+              <>
+                <div className={styles.successHeader}>
+                  <div className={styles.iconWrap}>
+                    <div className={styles.iconRing} />
+                    <div className={styles.iconCircle}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.checkSvg}>
+                        <polyline className={styles.checkPath} points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h1 className={styles.heading}>Order confirmed! 🎉</h1>
+                  <p className={styles.subtext}>Your lunch is on its way to <strong>{workspaceName}.</strong></p>
                 </div>
-              )}
-              <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>Total charged</span>
-                <span className={styles.totalAmt}>£{count.toFixed(2)}</span>
-              </div>
-            </div>
+
+                <div className={styles.card}>
+                  <p className={styles.cardLabel}>YOUR ORDER</p>
+                  <div className={styles.orderItems}>
+                    {items.map((item, i) => (
+                      <div key={i} className={styles.orderItem}>
+                        <div className={styles.dayBadge}>
+                          <span className={styles.dayName}>{dayName}</span>
+                          <span className={styles.dayDate}>{dayNum}</span>
+                        </div>
+                        {item.img && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={item.img} alt={item.dishName} className={styles.mealImg} />
+                        )}
+                        <div className={styles.mealInfo}>
+                          <span className={styles.mealName}>{item.dishName}</span>
+                          <div className={styles.mealMeta}>
+                            <span>{item.portionSize} Portion</span>
+                            {(item.tags || []).map(t => <span key={t} className={styles.tag}>· {t}</span>)}
+                            {item.qty > 1 && <span className={styles.tag}>· x{item.qty}</span>}
+                          </div>
+                        </div>
+                        <span className={styles.mealPrice}>£{(Number(item.price) * (item.qty || 1)).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {discount > 0 && (
+                    <div className={styles.totalRow} style={{ opacity: 0.65 }}>
+                      <span className={styles.totalLabel}>Subtotal</span>
+                      <span className={styles.totalAmt}>£{subtotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {discount > 0 && (
+                    <div className={styles.totalRow} style={{ color: "#22a06b" }}>
+                      <span className={styles.totalLabel}>Discount ({order?.discount?.label})</span>
+                      <span className={styles.totalAmt}>−£{discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className={styles.totalRow}>
+                    <span className={styles.totalLabel}>Total charged</span>
+                    <span className={styles.totalAmt}>£{count.toFixed(2)}</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className={styles.actions}>
               <Link href="/menu" className={styles.btnPrimary}>Order more</Link>

@@ -93,24 +93,28 @@ export default function ReviewPage() {
   // ── Plan selection ──
   const [selectedPlan, setSelectedPlan] = useState("one-time");
   const [planModalOpen, setPlanModalOpen] = useState(null); // null | "weekly" | "one-off"
+  const [plans, setPlans] = useState({
+    weekly: { name: "Weekly Plan", price: null, description: "Same dish delivered every selected day of the week at your scheduled lunch time. Perfect for consistent nutrition and meal planning." },
+    "one-off": { name: "One-off Plan", price: null, description: "Dish delivered on alternate days for 2 weeks. Great way to try our meals without long-term commitment." },
+    "one-time": { name: "One-time Order", price: null, description: "Single delivery only. No recurring charges. Perfect for trying out dishes." },
+  });
 
-  const PLANS = {
-    weekly: {
-      name: "Weekly Plan",
-      price: "£8.00",
-      description: "Same dish delivered every selected day of the week at your scheduled lunch time. Perfect for consistent nutrition and meal planning.",
-    },
-    "one-off": {
-      name: "One-off Plan",
-      price: "£5.00",
-      description: "Dish delivered on alternate days for 2 weeks. Great way to try our meals without long-term commitment.",
-    },
-    "one-time": {
-      name: "One-time Order",
-      price: "Pay per meal",
-      description: "Single delivery only. No recurring charges. Perfect for trying out dishes.",
-    },
-  };
+  useEffect(() => {
+    api.get("/api/subscriptions/available-plans")
+      .then(data => {
+        if (data.plans && Array.isArray(data.plans)) {
+          const weeklyPlan = data.plans.find(p => p.type === "weekly");
+          const oneOffPlan = data.plans.find(p => p.type === "one-off");
+
+          setPlans(prev => ({
+            ...prev,
+            weekly: { ...prev.weekly, price: weeklyPlan?.price },
+            "one-off": { ...prev["one-off"], price: oneOffPlan?.price },
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // ── Order submission ──
   const [submitting, setSubmitting] = useState(false);
@@ -124,7 +128,19 @@ export default function ReviewPage() {
     }, 0);
   };
 
-  const subtotal = items.reduce((s, i) => s + ((i.price || 0) * (i.qty || 1)) + getAddonTotal(i), 0);
+  // Calculate subtotal and final total based on plan type
+  const getDishSubtotal = () => items.reduce((s, i) => s + ((i.price || 0) * (i.qty || 1)) + getAddonTotal(i), 0);
+  const dishSubtotal = getDishSubtotal();
+
+  // Determine actual price based on plan selection
+  const getOrderPrice = () => {
+    if (selectedPlan === "one-time") return dishSubtotal;
+    const planPrice = plans[selectedPlan]?.price;
+    return planPrice !== null && planPrice !== undefined ? planPrice : dishSubtotal;
+  };
+  const orderPrice = getOrderPrice();
+
+  const subtotal = orderPrice;
   const discount = promoApplied && promoDiscount
     ? promoDiscount.type === "percentage"
       ? subtotal * (promoDiscount.value / 100)
@@ -166,6 +182,7 @@ export default function ReviewPage() {
         lunchTime:           order.lunchTime,
         isWeeklySubscription: order.isWeeklySubscription || false,
         planType:            selectedPlan,
+        planPrice:           getOrderPrice(),
         ...(promoApplied && promo ? { promoCode: promo } : {}),
         items: items.map(item => ({
           dishId:      item.dishId,
@@ -421,7 +438,7 @@ export default function ReviewPage() {
             <div className={styles.planSection}>
               <h3 className={styles.planSectionTitle}>Select your delivery plan</h3>
               <div className={styles.plansGrid}>
-                {Object.entries(PLANS).map(([key, plan]) => (
+                {Object.entries(plans).map(([key, plan]) => (
                   <label key={key} className={`${styles.planCard} ${selectedPlan === key ? styles.planCardSelected : ""}`}>
                     <input
                       type="radio"
@@ -433,7 +450,13 @@ export default function ReviewPage() {
                     />
                     <div className={styles.planCardContent}>
                       <p className={styles.planCardName}>{plan.name}</p>
-                      <p className={styles.planCardPrice}>{plan.price}</p>
+                      <p className={styles.planCardPrice}>
+                        {key === "one-time"
+                          ? "Pay per meal"
+                          : plan.price !== null
+                            ? `£${(plan.price / 100).toFixed(2)}`
+                            : "Loading..."}
+                      </p>
                       {key !== "one-time" && (
                         <button
                           type="button"
@@ -454,10 +477,10 @@ export default function ReviewPage() {
               <div className={styles.planModalOverlay} onClick={() => setPlanModalOpen(null)}>
                 <div className={styles.planModal} onClick={e => e.stopPropagation()}>
                   <div className={styles.planModalHeader}>
-                    <h2 className={styles.planModalTitle}>{PLANS[planModalOpen].name}</h2>
+                    <h2 className={styles.planModalTitle}>{plans[planModalOpen]?.name}</h2>
                     <button className={styles.planModalClose} onClick={() => setPlanModalOpen(null)}>✕</button>
                   </div>
-                  <p className={styles.planModalDescription}>{PLANS[planModalOpen].description}</p>
+                  <p className={styles.planModalDescription}>{plans[planModalOpen]?.description}</p>
                   <button className={styles.planModalSelectBtn} onClick={() => { setSelectedPlan(planModalOpen); setPlanModalOpen(null); }}>
                     Select this plan
                   </button>

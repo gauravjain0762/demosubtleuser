@@ -62,7 +62,7 @@ export default function PricingPage() {
                   </div>
 
                   <div className={styles.planPrice}>
-                    <span className={styles.priceAmount}>£{plan.price.toFixed(2)}</span>
+                    <span className={styles.priceAmount}>£{plan.price ? Number(plan.price).toFixed(2) : "0.00"}</span>
                     <span className={styles.priceFrequency}>/week</span>
                   </div>
 

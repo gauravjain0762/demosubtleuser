@@ -27,7 +27,6 @@ export default function Footer() {
           <div className={styles.footerCol}>
             <p className={styles.footerColTitle}>COMPANY</p>
             <Link href="/contact" className={styles.footerLink}>Contact</Link>
-            {/* <a href="#" className={styles.footerLink}>Privacy Policy</a> */}
           </div>
         </div>
       </div>

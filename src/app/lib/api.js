@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BASE = "https://plain-frog-28dcsubtle.gauravjain0762.workers.dev";
 
 function getToken() {
   if (typeof window === "undefined") return null;

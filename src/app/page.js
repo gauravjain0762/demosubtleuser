@@ -577,14 +577,12 @@ export default function Home() {
             <div className={styles.footerCol}>
               <p className={styles.footerColTitle}>PLATFORM</p>
               <Link href="/menu" className={styles.footerLink}>Menu</Link>
-              <Link href="/get-started" className={styles.footerLink}>For businesses</Link>
-              <Link href="/get-started" className={styles.footerLink}>Pricing</Link>
+              <Link href="/for-businesses" className={styles.footerLink}>Become a Delivery Location</Link>
+              <Link href="/pricing" className={styles.footerLink}>Pricing</Link>
             </div>
             <div className={styles.footerCol}>
               <p className={styles.footerColTitle}>COMPANY</p>
-              <a href="#" className={styles.footerLink}>About us</a>
-              <Link href="/login" className={styles.footerLink}>Contact</Link>
-              <a href="#" className={styles.footerLink}>Privacy Policy</a>
+              <Link href="/contact" className={styles.footerLink}>Contact</Link>
             </div>
           </div>
         </div>

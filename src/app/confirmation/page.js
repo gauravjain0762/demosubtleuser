@@ -77,7 +77,7 @@ function ConfirmationPageInner() {
       if (orderType === "subscription") {
         // Subscription payment via Stripe Checkout
         api.get(`/api/subscriptions/verify-checkout?session_id=${sessionId}`)
-          .then(data => {
+          .then(async (data) => {
             if (data.success && data.subscription) {
               // Display subscription confirmation
               setOrder({
@@ -85,6 +85,15 @@ function ConfirmationPageInner() {
                 subscription: data.subscription,
                 items: [],
               });
+
+              // Mark promo code as used if one was applied
+              if (data.subscription.promoCode) {
+                try {
+                  await api.post("/api/promo/mark-used", { code: data.subscription.promoCode });
+                } catch (err) {
+                  console.error("Failed to mark promo as used:", err);
+                }
+              }
             } else {
               setLoadError(data.error || "Could not verify subscription.");
             }

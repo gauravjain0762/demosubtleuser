@@ -309,7 +309,7 @@ export default function ReviewPage() {
     }
   };
 
-  const handleOrderResponse = (data) => {
+  const handleOrderResponse = async (data) => {
     const localItems = order?.items || [];
     const enrichItems = (apiItems) => (apiItems?.length ? apiItems : localItems).map(apiItem => {
       const local = localItems.find(li => String(li.dishId) === String(apiItem.dishId));
@@ -326,6 +326,15 @@ export default function ReviewPage() {
     });
 
     sessionStorage.removeItem("sk_order");
+
+    // Mark promo code as used if one was applied
+    if (promoApplied && promo) {
+      try {
+        await api.post("/api/promo/mark-used", { code: promo });
+      } catch (err) {
+        console.error("Failed to mark promo as used:", err);
+      }
+    }
 
     if (data.checkoutUrl) {
       sessionStorage.setItem("sk_order_type", "one-time");

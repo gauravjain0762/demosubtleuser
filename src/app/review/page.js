@@ -560,9 +560,7 @@ export default function ReviewPage() {
             <div className={styles.planSection}>
               <h3 className={styles.planSectionTitle}>Deliver as recurring meal plan? (optional)</h3>
               <div className={styles.plansGrid}>
-                {Object.entries(plans)
-                  .filter(([key]) => key !== "one-time")
-                  .map(([key, plan]) => (
+                {Object.entries(plans).map(([key, plan]) => (
                   <label key={key} className={`${styles.planCard} ${selectedPlan === key ? styles.planCardSelected : ""}`}>
                     <input
                       type="radio"

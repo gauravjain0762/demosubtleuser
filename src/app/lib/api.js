@@ -1,4 +1,4 @@
-const BASE = "https://black-rain-894asubtle.pfelixtest123.workers.dev";
+const BASE = "https://plain-frog-28dcsubtle.gauravjain0762.workers.dev";
 
 function getToken() {
   if (typeof window === "undefined") return null;

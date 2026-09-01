@@ -22,7 +22,7 @@ export default function PricingPage() {
   useEffect(() => {
     Promise.all([
       api.get("/api/subscriptions/available-plans"),
-      fetch("https://black-rain-894asubtle.pfelixtest123.workers.dev/api/promo").then(res => res.json())
+      fetch("https://plain-frog-28dcsubtle.gauravjain0762.workers.dev/api/promo").then(res => res.json())
     ])
       .then(([plansData, promosData]) => {
         const plansArray = plansData?.plans || plansData || [];
